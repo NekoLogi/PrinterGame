@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     int prepCases;
     int step; // 1 = picking | 2 = Preparing | 3 = Placing Tray
     float prevDistance;
+    bool tray;
 
     void Start() {
         step = 3;
@@ -47,7 +48,11 @@ public class PlayerController : MonoBehaviour
             Prepare();
         }
         if (step == 2) {
+            if (tray == true) {
             Place();
+            } else {
+                FindObject(0);
+            }
         }
     }
 
@@ -115,7 +120,7 @@ public class PlayerController : MonoBehaviour
 
     void Prepare() {
         time++;
-        if (time == 300) {
+        if (time == 500) {
             prepCases++;
             try {
                 npcStatus.text = $"Prepare Tray: {prepCases}";
@@ -123,6 +128,8 @@ public class PlayerController : MonoBehaviour
 
             cases--;
             if (cases == 0) {
+                tray = true;
+                prepCases = 0;
                 step = 3;
                 npcStatus.text = "";
 
@@ -135,9 +142,16 @@ public class PlayerController : MonoBehaviour
     void Place() {
         time++;
         if (time == 100) {
-            step = 3;
-            npcStatus.text = "";
-            StartPrinter();
+
+            if (destination.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Idle")) {
+                step = 3;
+                npcStatus.text = "";
+
+                StartPrinter();
+
+                tray = false;
+            }
+
             time = 0;
         }
     }
@@ -149,8 +163,10 @@ public class PlayerController : MonoBehaviour
             npcStatus.text = "";
             step = 3;
             time = 0;
+
             FindObject(0);
-        }        
+
+        }
     }
 
     #endregion
