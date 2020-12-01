@@ -36,11 +36,11 @@ public class CameraView : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Q)) {
             float mouseX = -2f * lookSensitivity * Time.deltaTime;
-            rb.AddTorque(new Vector3(0f, -30f, 0f));
+            rb.AddTorque(new Vector3(0f, -45f, 0f));
         }
         if (Input.GetKeyDown(KeyCode.E)) {
             float mouseX = 2f * lookSensitivity * Time.deltaTime;
-            rb.AddTorque(new Vector3(0f, 30f, 0f));
+            rb.AddTorque(new Vector3(0f, 45f, 0f));
 
         }
         if (Input.GetKeyDown(KeyCode.Tab)) {

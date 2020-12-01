@@ -14,9 +14,6 @@ public class CameraController : MonoBehaviour
 
     public Vector3 worldPosition;
 
-    void Update() {
-    }
-
     void FixedUpdate() {
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.z = Input.GetAxisRaw("Vertical");

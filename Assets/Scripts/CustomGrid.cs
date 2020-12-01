@@ -6,15 +6,23 @@ public class CustomGrid : MonoBehaviour
 {
     [SerializeField] float gridSize;
 
-    private GameObject structure = null;
-    private Vector3 truePos;
-    private bool selectObject;
+    GameObject structure = null;
+    Vector3 truePos;
+    bool selectObject;
+    string[] objectTags;
+
+    Ray ray;
+    RaycastHit hitData;
+
+    private void Start() {
+        objectTags = new string[] { "Printer", "Shelf", "Decor" };
+    }
 
     void Update() {
         //Change select mode to true/false.
         if (Input.GetMouseButtonDown(0)) {
             GetMouseWorldPos();
-            if (structure != null) {
+            if (structure != null && Physics.Raycast(ray, out hitData, 1000)) {
                 ToggleObject();
             }
         }
@@ -40,13 +48,15 @@ public class CustomGrid : MonoBehaviour
     #region Methodes
 
     private Vector3 GetMouseWorldPos() {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitData;
+        ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        //If ray hit is in distance and of tag "Selectable", set gameobject info into variable.
+        //If ray hit is in range and is of tag in array, set gameobject info into variable.
         if (Physics.Raycast(ray, out hitData, 1000)) {
-            if (hitData.transform.gameObject.CompareTag("Selectable")) {
-                structure = hitData.transform.gameObject;
+            foreach (var tag in objectTags) {
+                if (hitData.transform.gameObject.CompareTag(tag) && selectObject == false) {
+                    structure = hitData.transform.gameObject;
+                    break;
+                }
             }
         }
         return new Vector3(hitData.point.x, hitData.point.y, hitData.point.z);

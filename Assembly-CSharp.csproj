@@ -59,8 +59,10 @@
     <Compile Include="Assets\Scripts\CameraView.cs" />
     <Compile Include="Assets\Scripts\CustomGrid.cs" />
     <Compile Include="Assets\Scripts\Agater300.cs" />
+    <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\DragObject.cs" />
     <Compile Include="Assets\Scripts\CameraController.cs" />
+    <Compile Include="Assets\Scripts\npcUI.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

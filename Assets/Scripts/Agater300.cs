@@ -5,30 +5,38 @@ using UnityEngine;
 public class Agater300 : MonoBehaviour
 {
     Animator animator;
+    AudioSource printerAudio;
 
     void Start() {
         animator = GetComponent<Animator>();
+        printerAudio = GetComponent<AudioSource>();
     }
 
     void Update() {
         if (Input.GetKey(KeyCode.C)) {
-            animator.SetBool("isPrinting", true);
+            Print();
         }
-        if (!Input.GetKey(KeyCode.C)) {
-            animator.SetBool("isPrinting", false);
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName("Agater 300 Tool Finished")) {
+            Finish();
         }
-        Debug.Log("C " + animator.GetBool("isPrinting"));
     }
 
-    void Printing() {
+    #region Methodes
 
+    public void Print() {
+        if (!printerAudio.isPlaying) {
+            animator.Play("Agater 300 Tool Printing");
+            printerAudio.Play(0);
+        }
     }
 
-    void Finished() {
-
+    void Finish() {
+        printerAudio.Stop();
     }
 
     void Error() {
-
+        printerAudio.Pause();
     }
+
+    #endregion
 }
