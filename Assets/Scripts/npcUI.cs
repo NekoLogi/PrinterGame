@@ -7,8 +7,8 @@ public class npcUI : MonoBehaviour
 {
     Text npcStatus;
 
-    void Start() {
-        npcStatus = gameObject.GetComponentInChildren<Canvas>().GetComponentInChildren<Text>();
+    void Awake() {
+        npcStatus = gameObject.GetComponentInChildren<Text>();
     }
 
     void FixedUpdate() {

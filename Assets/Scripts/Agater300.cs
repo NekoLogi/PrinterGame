@@ -6,18 +6,22 @@ public class Agater300 : MonoBehaviour
 {
     Animator animator;
     AudioSource printerAudio;
+    public GameObject tray;
 
-    void Start() {
+    void Awake() {
         animator = GetComponent<Animator>();
         printerAudio = GetComponent<AudioSource>();
     }
 
-    void Update() {
-        if (Input.GetKey(KeyCode.C)) {
-            Print();
-        }
+    void FixedUpdate() {
         if (animator.GetCurrentAnimatorStateInfo(0).IsName("Agater 300 Tool Finished")) {
             Finish();
+        }
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName("Idle")) {
+            tray.SetActive(false);
+        } else {
+            tray.SetActive(true);
+
         }
     }
 

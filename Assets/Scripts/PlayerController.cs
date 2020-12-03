@@ -9,17 +9,22 @@ public class PlayerController : MonoBehaviour
     NavMeshAgent agent;
     GameObject[] findObject;
     GameObject destination;
+    public Image progressBar;
+    public GameObject preparedTray;
+    public Animator animator;
     public Text npcStatus;
 
     string[] objects;
     int time;
     int cases;
     int prepCases;
-    int step; // 1 = picking | 2 = Preparing | 3 = Placing Tray
+    int printers;
+    int step; // 0 = picking | 1 = Preparing | 2 = Placing Tray
     float prevDistance;
     bool tray;
+    bool preparingTray;
 
-    void Start() {
+    void Awake() {
         step = 3;
         prevDistance = 9999999999999;
         objects = new string[] { "Shelf", "PrepareTable", "Printer" };
@@ -27,67 +32,72 @@ public class PlayerController : MonoBehaviour
         agent = gameObject.GetComponent<NavMeshAgent>();
         findObject = GameObject.FindGameObjectsWithTag(objects[0]);
 
+        progressBar.gameObject.SetActive(false);
+
         FindObject(0);
-
-        //npcStatus = gameObject.GetComponentInChildren<GameObject>().GetComponentInChildren<Canvas>().GetComponentInChildren<Text>();
     }
 
-    void Update() {
-
-    }
 
     void FixedUpdate() {
         try {
-        agent.SetDestination(destination.GetComponent<SphereCollider>().bounds.center);
+            agent.SetDestination(destination.GetComponent<SphereCollider>().bounds.center);
         } catch (System.Exception) { }
 
-        if (step == 0) {
-            PickItems();
-        }
-        if (step == 1) {
-            Prepare();
-        }
-        if (step == 2) {
-            if (tray == true) {
-            Place();
-            } else {
-                FindObject(0);
-            }
+        switch (step) {
+            case 0:
+                PickItems();
+                break;
+
+            case 1:
+                Prepare();
+                break;
+
+            case 2:
+                if (tray == true) {
+                    Printer();
+                } else {
+                    FindObject(0);
+                }
+                break;
         }
     }
-
-    #region Methodes
 
     void OnTriggerEnter(Collider other) {
         switch (destination.tag) {
 
             case "Shelf":
                 Debug.Log("Shelf");
-                npcStatus.text = "Picking Cases";
+                progressBar.GetComponent<ProgressBar>().current = 0;
+
                 time = 0;
                 cases = 0;
                 step = 0;
                 break;
 
             case "PrepareTable":
-                Debug.Log("Prepare Table");
-                npcStatus.text = "Prepare Tray";
+                progressBar.GetComponent<ProgressBar>().current = 0;
                 time = 0;
                 step = 1;
+                preparingTray = true;
                 break;
 
             case "Printer":
-                Debug.Log("Printer");
-                npcStatus.text = "Placing Tray";
                 time = 0;
                 step = 2;
                 break;
         }
     }
 
+
+    ///////////////////////////////////
+
+
+    #region Methodes
+
     void FindObject(int i) {
         //Go to nearest object and pick the cases.
         findObject = GameObject.FindGameObjectsWithTag(objects[i]);
+        printers = findObject.Length - 1;
 
         foreach (var productionObject in findObject) {
             float distance = Vector3.Distance(productionObject.transform.position, gameObject.transform.position);
@@ -100,73 +110,99 @@ public class PlayerController : MonoBehaviour
     }
 
     void PickItems() {
-        time++;
-        if (time == 100) {
-            cases++;
-            try {
-                npcStatus.text = $"Picking Cases: {cases}";
-            } catch (System.Exception) { }
+        if (gameObject.GetComponent<Collider>().bounds.Intersects(destination.GetComponent<SphereCollider>().bounds)) {
+            progressBar.gameObject.SetActive(true);
+            progressBar.GetComponent<ProgressBar>().maximum = 4;
+            time++;
 
-            if (cases == 4) {
+            if (time == 50) {
+                cases++;
+
+                progressBar.GetComponent<ProgressBar>().current = cases;
+                try {
+                } catch (System.Exception) { }
+
+                if (cases == 4) {
+                    time = 0;
+                    step = 3;
+                    progressBar.gameObject.SetActive(false);
+
+                    FindObject(1);
+                }
                 time = 0;
-                step = 3;
-                npcStatus.text = "";
-
-                FindObject(1);
             }
-            time = 0;
         }
     }
 
     void Prepare() {
-        time++;
-        if (time == 500) {
-            prepCases++;
-            try {
-                npcStatus.text = $"Prepare Tray: {prepCases}";
-            } catch (System.Exception) { }
-
-            cases--;
-            if (cases == 0) {
-                tray = true;
-                prepCases = 0;
-                step = 3;
-                npcStatus.text = "";
-
-                FindObject(2);
+        if (gameObject.GetComponent<Collider>().bounds.Intersects(destination.GetComponent<SphereCollider>().bounds)) {
+            if (preparingTray == true) {
+                preparedTray.SetActive(true);
+                animator.Play("PreparingTrayAgater300");
+                preparingTray = false;
             }
-            time = 0;
+            progressBar.gameObject.SetActive(true);
+            progressBar.GetComponent<ProgressBar>().maximum = 4;
+            preparedTray.SetActive(true);
+            time++;
+            if (time == 50) {
+                prepCases++;
+
+                progressBar.GetComponent<ProgressBar>().current = prepCases;
+                try {
+                } catch (System.Exception) { }
+
+                cases--;
+                if (cases == 0) {
+                    tray = true;
+                    prepCases = 0;
+                    step = 3;
+                    progressBar.gameObject.SetActive(false);
+
+                    FindObject(2);
+                }
+                time = 0;
+            }
         }
     }
 
-    void Place() {
-        time++;
-        if (time == 100) {
+    void Printer() {
+        switch (destination.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Idle")) {
+            case true:
+                if (gameObject.GetComponent<Collider>().bounds.Intersects(destination.GetComponent<SphereCollider>().bounds)) {
+                    progressBar.gameObject.SetActive(true);
+                    progressBar.GetComponent<ProgressBar>().maximum = 100;
+                    progressBar.GetComponent<ProgressBar>().current = time;
 
-            if (destination.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Idle")) {
-                step = 3;
-                npcStatus.text = "";
+                    time++;
+                    if (time == 100) {
+                        progressBar.gameObject.SetActive(false);
+                        preparedTray.SetActive(false);
 
-                StartPrinter();
+                        StartPrinter();
+                    }
+                }
+                break;
 
-                tray = false;
-            }
-
-            time = 0;
+            case false:
+                if (objects.Length > 1) {
+                    if (printers != 0) {
+                        printers--;
+                        destination = findObject[printers];
+                    } else {
+                        FindObject(2);
+                    }
+                }
+                break;
         }
     }
 
     void StartPrinter() {
-        npcStatus.text = "Starting Printer";
-        if (time == 100) {
             destination.GetComponent<Agater300>().Print();
-            npcStatus.text = "";
+            tray = false;
             step = 3;
-            time = 0;
 
             FindObject(0);
-
-        }
     }
 
     #endregion
