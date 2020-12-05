@@ -6,9 +6,9 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-    NavMeshAgent agent;
     GameObject[] findObject;
     GameObject destination;
+    public NavMeshAgent agent;
     public Image progressBar;
     public GameObject preparedTray;
     public Animator animator;
@@ -18,30 +18,29 @@ public class PlayerController : MonoBehaviour
     int time;
     int cases;
     int prepCases;
-    int printers;
+    int nextObject;
     int step; // 0 = picking | 1 = Preparing | 2 = Placing Tray
     float prevDistance;
     bool tray;
     bool preparingTray;
 
-    void Awake() {
+    void Start() {
         step = 3;
         prevDistance = 9999999999999;
         objects = new string[] { "Shelf", "PrepareTable", "Printer" };
 
-        agent = gameObject.GetComponent<NavMeshAgent>();
         findObject = GameObject.FindGameObjectsWithTag(objects[0]);
 
         progressBar.gameObject.SetActive(false);
 
         FindObject(0);
-    }
 
+        SetDestination();
+    }
+    
 
     void FixedUpdate() {
-        try {
-            agent.SetDestination(destination.GetComponent<SphereCollider>().bounds.center);
-        } catch (System.Exception) { }
+        SetDestination();
 
         switch (step) {
             case 0:
@@ -88,16 +87,33 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     ///////////////////////////////////
 
 
     #region Methodes
 
+    void SetDestination() {
+        try {
+            if (destination.GetComponent<CheckCollider>().inUse) {
+                if (CheckInUse()) {
+                    agent.isStopped = false;
+                    agent.SetDestination(destination.GetComponent<SphereCollider>().bounds.center);
+                } else {
+                    agent.isStopped = true;
+                    ChangeObject();
+                }
+            } else {
+                agent.isStopped = false;
+                agent.SetDestination(destination.GetComponent<SphereCollider>().bounds.center);
+            }
+
+        } catch (System.Exception) { }
+    }
+
     void FindObject(int i) {
         //Go to nearest object and pick the cases.
         findObject = GameObject.FindGameObjectsWithTag(objects[i]);
-        printers = findObject.Length - 1;
+        nextObject = findObject.Length - 1;
 
         foreach (var productionObject in findObject) {
             float distance = Vector3.Distance(productionObject.transform.position, gameObject.transform.position);
@@ -109,61 +125,99 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void PickItems() {
-        if (gameObject.GetComponent<Collider>().bounds.Intersects(destination.GetComponent<SphereCollider>().bounds)) {
-            progressBar.gameObject.SetActive(true);
-            progressBar.GetComponent<ProgressBar>().maximum = 4;
-            time++;
-
-            if (time == 50) {
-                cases++;
-
-                progressBar.GetComponent<ProgressBar>().current = cases;
-                try {
-                } catch (System.Exception) { }
-
-                if (cases == 4) {
-                    time = 0;
-                    step = 3;
-                    progressBar.gameObject.SetActive(false);
-
-                    FindObject(1);
-                }
-                time = 0;
+    void ChangeObject() {
+        if (objects.Length > 1) {
+            if (nextObject != 0) {
+                nextObject--;
+                destination = findObject[nextObject];
+            } else {
+                FindObject(step);
             }
         }
     }
 
-    void Prepare() {
-        if (gameObject.GetComponent<Collider>().bounds.Intersects(destination.GetComponent<SphereCollider>().bounds)) {
-            if (preparingTray == true) {
-                preparedTray.SetActive(true);
-                animator.Play("PreparingTrayAgater300");
-                preparingTray = false;
-            }
-            progressBar.gameObject.SetActive(true);
-            progressBar.GetComponent<ProgressBar>().maximum = 4;
-            preparedTray.SetActive(true);
-            time++;
-            if (time == 50) {
-                prepCases++;
+    void PickItems() {
+        switch (destination.GetComponent<CheckCollider>().inUse && CheckInUse()) {
+            case true:
+                progressBar.gameObject.SetActive(true);
+                progressBar.GetComponent<ProgressBar>().maximum = 4;
+                time++;
 
-                progressBar.GetComponent<ProgressBar>().current = prepCases;
-                try {
-                } catch (System.Exception) { }
+                if (time == 50) {
+                    cases++;
 
-                cases--;
-                if (cases == 0) {
-                    tray = true;
-                    prepCases = 0;
-                    step = 3;
-                    progressBar.gameObject.SetActive(false);
+                    progressBar.GetComponent<ProgressBar>().current = cases;
+                    try {
+                    } catch (System.Exception) { }
 
-                    FindObject(2);
+                    if (cases == 4) {
+                        time = 0;
+                        step = 3;
+                        progressBar.gameObject.SetActive(false);
+                        agent.isStopped = false;
+
+                        FindObject(1);
+                    }
+                    time = 0;
                 }
-                time = 0;
-            }
+                break;
+
+            case false:
+                ChangeObject();
+                break;
         }
+    }
+
+    bool CheckInUse() {
+        if (destination.GetComponent<SphereCollider>().bounds.Intersects(gameObject.GetComponent<Collider>().bounds)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void Prepare() {
+        if (destination.GetComponent<CheckCollider>().inUse && CheckInUse()) {
+        } else {
+        }
+
+        switch (destination.GetComponent<CheckCollider>().inUse && CheckInUse()) {
+            case true:
+                if (preparingTray == true) {
+                    preparedTray.SetActive(true);
+                    animator.Play("PreparingTrayAgater300");
+                    preparingTray = false;
+                }
+                progressBar.gameObject.SetActive(true);
+                progressBar.GetComponent<ProgressBar>().maximum = 4;
+                preparedTray.SetActive(true);
+                time++;
+                if (time == 50) {
+                    prepCases++;
+
+                    progressBar.GetComponent<ProgressBar>().current = prepCases;
+                    try {
+                    } catch (System.Exception) { }
+
+                    cases--;
+                    if (cases == 0) {
+                        tray = true;
+                        prepCases = 0;
+                        step = 3;
+                        progressBar.gameObject.SetActive(false);
+                        agent.isStopped = false;
+
+                        FindObject(2);
+                    }
+                    time = 0;
+                }
+                break;
+
+            case false:
+                ChangeObject();
+                break;
+        }
+
     }
 
     void Printer() {
@@ -178,6 +232,7 @@ public class PlayerController : MonoBehaviour
                     if (time == 100) {
                         progressBar.gameObject.SetActive(false);
                         preparedTray.SetActive(false);
+                        agent.isStopped = false;
 
                         StartPrinter();
                     }
@@ -186,9 +241,9 @@ public class PlayerController : MonoBehaviour
 
             case false:
                 if (objects.Length > 1) {
-                    if (printers != 0) {
-                        printers--;
-                        destination = findObject[printers];
+                    if (nextObject != 0) {
+                        nextObject--;
+                        destination = findObject[nextObject];
                     } else {
                         FindObject(2);
                     }
