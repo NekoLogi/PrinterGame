@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class DragObject : MonoBehaviour
@@ -8,9 +9,12 @@ public class DragObject : MonoBehaviour
     private float mZCoord;
 
     void LateUpdate() {
+        Task.Run(GetCoordinates);
+    }
+
+    void GetCoordinates() {
         mZCoord = Camera.main.WorldToScreenPoint(gameObject.transform.position).z;
         mOffset = gameObject.transform.position - GetMouseWorldPos();
-
     }
 
     void OnMouseDrag()
