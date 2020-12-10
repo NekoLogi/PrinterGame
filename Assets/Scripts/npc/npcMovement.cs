@@ -75,13 +75,13 @@ public class npcMovement : MonoBehaviour
         }
     }
 
-    void ChangeObject() {
+    public void ChangeObject() {
         if (Object.Length > 1) {
             if (nextObject != 0) {
                 nextObject--;
                 destination = Object[nextObject];
             } else {
-                //FindObject(step);
+                FindObject(newDestination);
             }
         }
     }
